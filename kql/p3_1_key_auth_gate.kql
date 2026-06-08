@@ -1,0 +1,10 @@
+// P3.1 gate -- must return ZERO rows for 7 consecutive days before
+// disableLocalAuth=true is allowed to merge.
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.COGNITIVESERVICES" and Category == "RequestResponse"
+| where TimeGenerated > ago(7d)
+| where ResultSignature startswith "2"     // successful calls only
+| where isempty(identity_claim_oid_g)       // no AAD token -> key auth
+| summarize keyOnlyCalls = count(),
+            distinctCallers = dcount(CallerIPAddress)
+  by bin(TimeGenerated, 1d)

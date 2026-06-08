@@ -1,0 +1,10 @@
+// AIF_ChargebackByTeam(monthStart:datetime, rgTotalUSD:real)
+// rgTotalUSD is the authoritative RG total for the month from Cost Management.
+// Chargeback is derived from token share -- NOT a per-request USD estimate.
+let totals = AIF_TokensByTeamModel(now() - monthStart)
+    | summarize totalTokens = sum(input + output) by team;
+let grandTotal = toscalar(totals | summarize sum(totalTokens));
+totals
+| extend sharePC   = round(100.0 * totalTokens / grandTotal, 2)
+| extend chargeUSD = round(rgTotalUSD * totalTokens / grandTotal, 2)
+| order by chargeUSD desc

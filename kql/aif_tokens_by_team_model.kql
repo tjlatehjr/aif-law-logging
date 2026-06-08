@@ -1,0 +1,15 @@
+// AIF_TokensByTeamModel(timeRange:timespan)
+let mapping = AIF_CallerToTeam();
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.COGNITIVESERVICES" and Category == "RequestResponse"
+| where TimeGenerated > ago(timeRange)
+| extend principalId = coalesce(identity_claim_oid_g, identity_claim_appid_g, "api-key")
+| lookup kind=leftouter mapping on principalId
+| extend team  = coalesce(team, iff(principalId == "api-key", "api-key-unattributed", "aad-unattributed"))
+| extend usage = parse_json(properties_s).usage
+| extend model = tostring(parse_json(properties_s).modelDeploymentName)
+| summarize requests = count(),
+            input  = sum(toint(usage.prompt_tokens)),
+            cached = sum(toint(usage.prompt_tokens_details.cached_tokens)),
+            output = sum(toint(usage.completion_tokens))
+  by team, model, bin(TimeGenerated, 1d)

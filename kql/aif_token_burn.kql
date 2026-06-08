@@ -1,0 +1,13 @@
+// AIF_TokenBurn(team_param:string, monthStart:datetime)
+// Per-model token quota -- rows injected from var.token_quotas via templatefile.
+let quotas = datatable(team:string, model:string, inputQuota:long, outputQuota:long)
+[
+    ${quota_rows}
+];
+AIF_TokensByTeamModel(now() - monthStart)
+| where team == team_param
+| summarize input = sum(input), output = sum(output) by model
+| join kind=leftouter quotas on $left.model == $right.model and $left.team == team_param
+| extend inputPct  = round(100.0 * input  / inputQuota,  1),
+         outputPct = round(100.0 * output / outputQuota, 1)
+| project model, input, inputQuota, inputPct, output, outputQuota, outputPct

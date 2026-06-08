@@ -1,0 +1,8 @@
+// AIF_CallerToTeam() -- no parameters.
+// Single source of truth for principal-ID -> team translation.
+// Rows injected from var.caller_to_team via templatefile.
+// Seeded from P0.3 inventory; migrates to Entra group-ID keys after P1.2.
+datatable(principalId:string, callerType:string, team:string)
+[
+    ${rows}
+]

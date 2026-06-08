@@ -1,0 +1,19 @@
+// AIF_TopUsersInTeam(team_param:string, timeRange:timespan)
+// INFERRED from the "Tokens by caller oid" query in the requirement, scoped by team.
+// The requirement names this function but does not supply its body -- review.
+let mapping = AIF_CallerToTeam();
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.COGNITIVESERVICES" and Category == "RequestResponse"
+| where TimeGenerated > ago(timeRange)
+| extend principalId = coalesce(identity_claim_oid_g, identity_claim_appid_g, "api-key")
+| lookup kind=leftouter mapping on principalId
+| extend team = coalesce(team, iff(principalId == "api-key", "api-key-unattributed", "aad-unattributed"))
+| where team == team_param
+| extend usage = parse_json(properties_s).usage
+| extend model = tostring(parse_json(properties_s).modelDeploymentName)
+| summarize requests = count(),
+            input  = sum(toint(usage.prompt_tokens)),
+            cached = sum(toint(usage.prompt_tokens_details.cached_tokens)),
+            output = sum(toint(usage.completion_tokens))
+  by principalId, callerType, model
+| order by output + input desc
