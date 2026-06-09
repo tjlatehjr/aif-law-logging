@@ -96,3 +96,28 @@ variable "action_group_ids" {
   type        = list(string)
   default     = []
 }
+
+###############################################################################
+# Optional: long-term archive (learned from the standard tutorial pattern).
+# Out of P1.1 scope by default — the ticket scopes to the workspace feed only,
+# and retention on the shared workspace is the owner team's concern. Enable this
+# only if you want independent long-term retention in a Storage Account you own.
+###############################################################################
+
+variable "enable_storage_archive" {
+  description = "Also archive diagnostic logs to an existing Storage Account for long-term retention."
+  type        = bool
+  default     = false
+}
+
+variable "storage_account_id" {
+  description = "Existing Storage Account ID for archive. Required when enable_storage_archive = true. Tiering/lifecycle lives on that account, not here."
+  type        = string
+  default     = null
+}
+
+variable "enable_platform_metrics" {
+  description = "Also send AllMetrics (latency, throttling) to the workspace. Not needed for cost attribution; off by default."
+  type        = bool
+  default     = false
+}

@@ -3,8 +3,8 @@
 AzureDiagnostics
 | where ResourceProvider == "MICROSOFT.COGNITIVESERVICES" and Category == "RequestResponse"
 | where TimeGenerated > ago(7d)
-| where ResultSignature startswith "2"     // successful calls only
-| where isempty(identity_claim_oid_g)       // no AAD token -> key auth
+| where ResultSignature startswith "2"
+| where isempty(column_ifexists("identity_claim_oid_g", ""))
 | summarize keyOnlyCalls = count(),
             distinctCallers = dcount(CallerIPAddress)
   by bin(TimeGenerated, 1d)

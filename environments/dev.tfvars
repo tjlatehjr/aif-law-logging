@@ -22,3 +22,8 @@ caller_to_team = [
 
 # Empty until quotas are agreed (P1.4). Functions still parse + run; quota columns show null.
 token_quotas = []
+
+# --- Optional extras (off by default; out of P1.1 scope) ---
+# enable_storage_archive  = false
+# storage_account_id      = null   # required if enable_storage_archive = true
+# enable_platform_metrics = false

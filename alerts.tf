@@ -5,13 +5,14 @@ resource "azurerm_monitor_scheduled_query_rules_alert_v2" "p3_1_gate" {
   resource_group_name = var.foundry_rg
   location            = var.location
 
-  # NOTE: v2 uses `scopes` (the workspace IS the scope). The v1-style
-  # `workspace_id` argument does not exist on this resource.
+  # v2 uses `scopes` (the workspace IS the scope); there is no `workspace_id` arg.
   scopes   = [var.law_id]
   severity = 3 # Informational
 
+  # P2D is the provider's max for window_duration. The real 7-day lookback is
+  # enforced by ago(7d) inside the query itself, so the gate semantics hold.
   evaluation_frequency = "P1D"
-  window_duration      = "P7D"
+  window_duration      = "P2D"
 
   criteria {
     query                   = file("${path.module}/kql/p3_1_key_auth_gate.kql")

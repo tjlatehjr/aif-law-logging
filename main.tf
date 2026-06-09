@@ -12,11 +12,16 @@ locals {
 }
 
 # Ships Foundry RequestResponse + Audit logs to the shared (Copilot-owned) workspace.
+# Trace is intentionally omitted: it is internal debug data, adds log volume/cost,
+# and contributes nothing to per-team token attribution.
 resource "azurerm_monitor_diagnostic_setting" "foundry" {
   name                           = var.diagnostic_setting_name
   target_resource_id             = var.foundry_resource_id
   log_analytics_workspace_id     = var.law_id
   log_analytics_destination_type = var.log_analytics_destination_type
+
+  # Optional second destination for long-term archive (off by default).
+  storage_account_id = var.enable_storage_archive ? var.storage_account_id : null
 
   enabled_log {
     category = "RequestResponse"
@@ -24,5 +29,21 @@ resource "azurerm_monitor_diagnostic_setting" "foundry" {
 
   enabled_log {
     category = "Audit"
+  }
+
+  # Optional platform metrics. enabled_metric is the azurerm v4 block (the older
+  # `metric` block is deprecated and causes plan drift). Off by default.
+  dynamic "enabled_metric" {
+    for_each = var.enable_platform_metrics ? ["AllMetrics"] : []
+    content {
+      category = enabled_metric.value
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition     = !var.enable_storage_archive || var.storage_account_id != null
+      error_message = "storage_account_id is required when enable_storage_archive = true."
+    }
   }
 }
